@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>NHC Solutions Architecture</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #ffffff; padding: 16px 8px 24px; color: #1a1a1a; }
+.diagram { width: 100%; max-width: 900px; margin: 0 auto; position: relative; }
+
+.solutions-box { background: #ffffff; border: 1.5px solid #165483; border-radius: 10px; padding: 16px 24px; width: 340px; margin: 0 auto; }
+.solutions-box .box-title { font-size: 13px; font-weight: 700; color: #165483; text-align: center; letter-spacing: 0.08em; margin-bottom: 2px; }
+.solutions-box .box-sub { font-size: 11px; color: #767C7F; text-align: center; margin-bottom: 10px; }
+.solutions-box ul { list-style: none; }
+.solutions-box ul li { font-size: 12px; color: #1a1a1a; display: flex; align-items: center; gap: 6px; cursor: pointer; border-radius: 4px; padding: 4px 6px; transition: background 0.15s; }
+.solutions-box ul li:hover { background: #f0f4f8; }
+.solutions-box ul li.active { background: #ddeaf4; color: #165483; font-weight: 600; }
+.solutions-box ul li::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: #165483; flex-shrink: 0; }
+
+.hint { font-size: 11px; color: #767C7F; text-align: center; margin-top: 6px; }
+.top-connector { height: 44px; position: relative; }
+.tc-inner { position: absolute; inset: 0; overflow: visible; }
+
+.mid-tier { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.mid-box { border-radius: 8px; border: none; padding: 12px 14px; text-align: center; }
+.mid-box.network { background: linear-gradient(135deg, #BF2431, #8c1a23); }
+.mid-box.overlay { background: linear-gradient(135deg, #165483, #0e3a5c); }
+.mid-box.managed { background: linear-gradient(135deg, #767C7F, #4f5456); }
+.mid-box .title { font-size: 12px; font-weight: 700; letter-spacing: 0.07em; color: #fff; }
+.mid-box .sub { font-size: 10px; color: rgba(255,255,255,0.75); margin-top: 2px; }
+
+.mid-connector { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; height: 32px; }
+.col-line { display: flex; justify-content: center; align-items: stretch; }
+.col-line.network::after { content: ''; width: 1.5px; background: #BF2431; display: block; }
+.col-line.overlay::after { content: ''; width: 1.5px; background: #165483; display: block; }
+.col-line.managed::after { content: ''; width: 1.5px; background: #767C7F; display: block; }
+
+.cap-tier { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+.cap-col { border-radius: 8px; padding: 14px 14px 16px; }
+.cap-col.network { background: #fdf0f1; border: 0.5px solid #e8a0a6; }
+.cap-col.overlay { background: #eef4fa; border: 0.5px solid #9ab8d4; }
+.cap-col.managed { background: #f4f4f4; border: 0.5px solid #c0c3c5; }
+.cap-col .cap-title { font-size: 11px; font-weight: 700; letter-spacing: 0.06em; margin-bottom: 8px; padding-bottom: 6px; line-height: 1.4; }
+.cap-col.network .cap-title { color: #BF2431; border-bottom: 0.5px solid #e8a0a6; }
+.cap-col.overlay .cap-title { color: #165483; border-bottom: 0.5px solid #9ab8d4; }
+.cap-col.managed .cap-title { color: #4f5456; border-bottom: 0.5px solid #c0c3c5; }
+.cap-col .tag { display: inline-block; font-size: 10px; border-radius: 4px; padding: 2px 6px; margin: 2px 2px 2px 0; line-height: 1.5; border: 0.5px solid; cursor: default; transition: background 0.15s, border-color 0.15s, color 0.15s; }
+.cap-col.network .tag { background: #fff; border-color: #e8a0a6; color: #8c1a23; }
+.cap-col.overlay .tag { background: #fff; border-color: #9ab8d4; color: #0e3a5c; }
+.cap-col.managed .tag { background: #fff; border-color: #c0c3c5; color: #4f5456; }
+.tag.highlight-network { background: #BF2431 !important; border-color: #BF2431 !important; color: #fff !important; font-weight: 600; }
+.tag.highlight-overlay { background: #165483 !important; border-color: #165483 !important; color: #fff !important; font-weight: 600; }
+.tag.highlight-managed { background: #767C7F !important; border-color: #767C7F !important; color: #fff !important; font-weight: 600; }
+.tag.has-popup { cursor: pointer; }
+.tag.has-popup:hover { text-decoration: underline; text-underline-offset: 2px; }
+.cap-col .sub-heading { font-size: 10px; font-weight: 700; margin: 10px 0 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+.cap-col.overlay .sub-heading { color: #165483; }
+.cap-col.network .sub-heading { color: #BF2431; }
+
+/* Solution panel */
+.solution-panel { margin-top: 20px; border-radius: 10px; padding: 16px 20px; display: none; border: 1px solid #9ab8d4; background: #eef4fa; }
+.solution-panel.visible { display: block; }
+.solution-panel .panel-title { font-size: 13px; font-weight: 700; color: #165483; margin-bottom: 4px; }
+.solution-panel .panel-desc { font-size: 12px; color: #4f5456; margin-bottom: 14px; line-height: 1.6; }
+.section-label { font-size: 9px; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase; color: #767C7F; margin-bottom: 6px; }
+.caps-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+.sp-divider { height: 0.5px; background: #c5d8ea; margin: 10px 0; }
+
+/* Solution panel badges */
+.tip-wrap { position: relative; display: inline-block; }
+.sp-badge { font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: 500; color: #fff; cursor: default; line-height: 1.5; }
+.sp-badge.n { background: #BF2431; }
+.sp-badge.o { background: #165483; }
+.sp-badge.m { background: #767C7F; }
+.sp-badge.sup-n { background: transparent; border: 1px solid #BF2431; color: #8c1a23; font-weight: 400; }
+.sp-badge.sup-o { background: transparent; border: 1px solid #165483; color: #0e3a5c; font-weight: 400; }
+.sp-badge.sup-m { background: transparent; border: 1px solid #767C7F; color: #4f5456; font-weight: 400; }
+.sp-badge.has-popup { cursor: pointer; text-decoration: underline; text-underline-offset: 2px; text-decoration-color: rgba(0,0,0,0.3); }
+
+/* Tooltips in solution panel */
+.sp-tooltip { display: none; position: absolute; bottom: calc(100% + 7px); left: 50%; transform: translateX(-50%); background: #1a1a1a; color: #fff; font-size: 10px; line-height: 1.5; padding: 6px 9px; border-radius: 6px; white-space: normal; z-index: 100; pointer-events: none; width: 190px; text-align: center; }
+.sp-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 4px solid transparent; border-top-color: #1a1a1a; }
+.tip-wrap:hover .sp-tooltip { display: block; }
+
+/* Managed collapsed */
+.managed-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 10px; padding: 4px 10px; border-radius: 4px; background: #f4f4f4; border: 1px solid #c0c3c5; color: #4f5456; cursor: pointer; font-weight: 500; transition: background 0.15s; }
+.managed-badge:hover { background: #e8e8e8; }
+.managed-dot { width: 7px; height: 7px; border-radius: 50%; background: #767C7F; flex-shrink: 0; }
+.managed-arrow { font-size: 9px; color: #767C7F; transition: transform 0.2s; display: inline-block; }
+.managed-badge.open .managed-arrow { transform: rotate(180deg); }
+.managed-detail { display: none; margin-top: 8px; background: #fff; border: 0.5px solid #c0c3c5; border-radius: 8px; padding: 10px 12px; }
+.managed-detail.visible { display: block; }
+.managed-detail-title { font-size: 10px; font-weight: 700; color: #4f5456; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+.managed-items { display: flex; flex-wrap: wrap; gap: 5px; }
+.managed-item { font-size: 10px; padding: 2px 7px; border-radius: 4px; background: #f4f4f4; border: 0.5px solid #c0c3c5; color: #4f5456; }
+
+.sp-legend { display: flex; gap: 14px; margin-top: 12px; flex-wrap: wrap; align-items: center; }
+.sp-legend-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #767C7F; }
+.sp-legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+.sp-legend-outline { width: 8px; height: 8px; border-radius: 2px; border: 1.5px solid #999; }
+.sp-hint { font-size: 10px; color: #aaa; font-style: italic; }
+
+/* Cap tag popups */
+.tag-popup { position: fixed; z-index: 9999; background: #fff; border-radius: 8px; padding: 14px 16px; width: 300px; box-shadow: 0 4px 20px rgba(0,0,0,0.14); display: none; }
+.tag-popup.visible { display: block; }
+.tag-popup.tier-network { border: 1px solid #e8a0a6; border-left: 3px solid #BF2431; }
+.tag-popup.tier-overlay { border: 1px solid #9ab8d4; border-left: 3px solid #165483; }
+.tag-popup .popup-eyebrow { font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
+.tag-popup.tier-network .popup-eyebrow { color: #BF2431; }
+.tag-popup.tier-overlay .popup-eyebrow { color: #165483; }
+.tag-popup .popup-title { font-size: 13px; font-weight: 700; margin-bottom: 7px; }
+.tag-popup.tier-network .popup-title { color: #8c1a23; }
+.tag-popup.tier-overlay .popup-title { color: #0e3a5c; }
+.tag-popup .popup-body { font-size: 11px; color: #4f5456; line-height: 1.65; }
+.tag-popup .popup-body p { margin-bottom: 6px; }
+.tag-popup .popup-body p:last-child { margin-bottom: 0; }
+.partners-btn { display: inline-block; margin-top: 10px; font-size: 11px; font-weight: 600; cursor: pointer; padding: 4px 0; border: none; background: none; }
+.tier-network .partners-btn { color: #BF2431; }
+.tier-overlay .partners-btn { color: #165483; }
+.partners-btn:hover { text-decoration: underline; }
+
+.partners-popup { position: fixed; z-index: 10000; background: #fff; border-radius: 8px; padding: 14px 16px; width: 220px; box-shadow: 0 4px 20px rgba(0,0,0,0.16); display: none; }
+.partners-popup.visible { display: block; }
+.partners-popup.tier-network { border: 1px solid #e8a0a6; border-left: 3px solid #BF2431; }
+.partners-popup.tier-overlay { border: 1px solid #9ab8d4; border-left: 3px solid #165483; }
+.partners-popup .pp-title { font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 8px; padding-right: 16px; }
+.partners-popup.tier-network .pp-title { color: #BF2431; }
+.partners-popup.tier-overlay .pp-title { color: #165483; }
+.partners-popup ul { list-style: none; }
+.partners-popup ul li { font-size: 12px; color: #1a1a1a; padding: 5px 0; border-bottom: 0.5px solid #f0f0f0; display: flex; align-items: center; gap: 7px; }
+.partners-popup ul li:last-child { border-bottom: none; }
+.partners-popup ul li::before { content: ''; width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+.partners-popup.tier-network ul li::before { background: #BF2431; }
+.partners-popup.tier-overlay ul li::before { background: #165483; }
+.pp-close { position: absolute; top: 8px; right: 10px; font-size: 14px; cursor: pointer; color: #767C7F; line-height: 1; background: none; border: none; padding: 0; }
+.pp-close:hover { color: #1a1a1a; }
+</style>
+</head>
+<body>
+<div class="diagram">
+
+  <div class="tag-popup" id="tag-popup">
+    <div class="popup-eyebrow" id="popup-eyebrow"></div>
+    <div class="popup-title" id="popup-title"></div>
+    <div class="popup-body" id="popup-body"></div>
+    <div id="popup-partners-wrap"></div>
+  </div>
+  <div class="partners-popup" id="partners-popup">
+    <button class="pp-close" onclick="hidePartners()">&#x2715;</button>
+    <div class="pp-title" id="pp-title"></div>
+    <ul id="pp-list"></ul>
+  </div>
+
+  <div class="solutions-box">
+    <div class="box-title">SOLUTIONS</div>
+    <div class="box-sub">Customer Outcomes — click to explore</div>
+    <ul>
+      <li onclick="showSolution('continuity')" id="li-continuity">Business Continuity</li>
+      <li onclick="showSolution('secure')" id="li-secure">Secure Network</li>
+      <li onclick="showSolution('workforce')" id="li-workforce">Modern Workforce</li>
+      <li onclick="showSolution('multilocation')" id="li-multilocation">Multi-Location Management</li>
+      <li onclick="showSolution('cloud')" id="li-cloud">Cloud Performance</li>
+      <li onclick="showSolution('voice')" id="li-voice">Voice Modernization</li>
+    </ul>
+  </div>
+  <p class="hint">Click a solution above to see which capabilities deliver it</p>
+
+  <!-- Solution panel -->
+  <div class="solution-panel" id="solution-panel">
+    <div class="panel-title" id="panel-title"></div>
+    <div class="panel-desc" id="panel-desc"></div>
+
+    <div class="section-label">Key capabilities</div>
+    <div class="caps-row" id="p-key"></div>
+
+    <div class="sp-divider"></div>
+    <div class="section-label">Also involved</div>
+    <div class="caps-row" id="p-supporting"></div>
+
+    <div class="sp-divider"></div>
+    <div class="section-label">Managed by NHC</div>
+    <div class="caps-row" id="p-managed-key"></div>
+    <div id="p-managed-sup-row"><div class="caps-row" id="p-managed-sup"></div></div>
+
+    <div class="managed-badge" id="managed-badge" onclick="toggleManaged()">
+      <span class="managed-dot"></span>
+      Standard managed coverage also applies
+      <span class="managed-arrow" id="managed-arrow">&#9660;</span>
+    </div>
+    <div class="managed-detail" id="managed-detail">
+      <div class="managed-detail-title">Always included</div>
+      <div class="managed-items" id="managed-standard-list"></div>
+    </div>
+
+    <div class="sp-legend">
+      <div class="sp-legend-item"><div class="sp-legend-dot" style="background:#BF2431"></div>Network</div>
+      <div class="sp-legend-item"><div class="sp-legend-dot" style="background:#165483"></div>Overlay</div>
+      <div class="sp-legend-item"><div class="sp-legend-dot" style="background:#767C7F"></div>Managed</div>
+      <div class="sp-legend-item"><div class="sp-legend-outline"></div>Supporting</div>
+      <div class="sp-legend-item sp-hint">Hover badges for detail</div>
+    </div>
+  </div>
+
+  <div class="top-connector">
+    <svg class="tc-inner" viewBox="0 0 900 44" preserveAspectRatio="none" style="width:100%;height:100%;">
+      <line x1="450" y1="0" x2="450" y2="22" stroke="#c0c3c5" stroke-width="1.5"/>
+      <line x1="150" y1="22" x2="750" y2="22" stroke="#c0c3c5" stroke-width="1.5"/>
+      <line x1="150" y1="22" x2="150" y2="44" stroke="#BF2431" stroke-width="1.5"/>
+      <line x1="450" y1="22" x2="450" y2="44" stroke="#165483" stroke-width="1.5"/>
+      <line x1="750" y1="22" x2="750" y2="44" stroke="#767C7F" stroke-width="1.5"/>
+    </svg>
+  </div>
+
+  <div class="mid-tier">
+    <div class="mid-box network"><div class="title">NETWORK</div><div class="sub">Connects</div></div>
+    <div class="mid-box overlay"><div class="title">OVERLAY</div><div class="sub">Enables</div></div>
+    <div class="mid-box managed"><div class="title">MANAGED</div><div class="sub">Assures Outcomes</div></div>
+  </div>
+  <div class="mid-connector">
+    <div class="col-line network"></div>
+    <div class="col-line overlay"></div>
+    <div class="col-line managed"></div>
+  </div>
+
+  <div class="cap-tier">
+    <div class="cap-col network">
+      <div class="cap-title">Network Connectivity</div>
+      <span class="tag has-popup" id="tag-fiber" onclick="showPopup(event,'fiber')">Fiber</span>
+      <span class="tag" id="tag-broadband">Broadband</span>
+      <span class="tag" id="tag-wireless">Wireless LTE/5G</span>
+      <span class="tag" id="tag-fixedwireless">Fixed Wireless</span>
+      <span class="tag" id="tag-satellite">Satellite</span>
+      <span class="tag" id="tag-analog">Analog &amp; PRI Replacement</span>
+      <span class="tag" id="tag-pots">POTS Replacement / FLS</span>
+    </div>
+    <div class="cap-col overlay">
+      <div class="cap-title">Cloud &amp; Communication Technologies</div>
+      <span class="tag has-popup" id="tag-ucaas" onclick="showPopup(event,'ucaas')">UCaaS</span>
+      <span class="tag" id="tag-cc">Contact Center</span>
+      <span class="tag" id="tag-voip">VoIP Calling</span>
+      <span class="tag" id="tag-teams">Teams Calling</span>
+      <span class="tag" id="tag-sip">SIP Trunking</span>
+      <span class="tag" id="tag-numrep">Number Reputation Mgmt</span>
+      <div class="sub-heading">Network Control &amp; Security</div>
+      <span class="tag has-popup" id="tag-sdwan" onclick="showPopup(event,'sdwan')">SD-WAN</span>
+      <span class="tag" id="tag-sase">SASE</span>
+      <span class="tag" id="tag-firewall">Firewall / Threat Protection</span>
+      <span class="tag" id="tag-perf">Performance Optimization</span>
+      <span class="tag" id="tag-lan">LAN &amp; WiFi</span>
+      <span class="tag" id="tag-edgepower">Edge Power &amp; Device Control</span>
+    </div>
+    <div class="cap-col managed">
+      <div class="cap-title">Managed by NHC</div>
+      <span class="tag" id="tag-onboarding">Service Onboarding &amp; Activation</span>
+      <span class="tag" id="tag-monitoring">Monitoring &amp; Observability</span>
+      <span class="tag" id="tag-incident">Incident Ownership &amp; Resolution</span>
+      <span class="tag" id="tag-sla">Service Assurance &amp; SLA Management</span>
+      <span class="tag" id="tag-change">Change Management &amp; Lifecycle Control</span>
+      <span class="tag" id="tag-cx">Customer Experience &amp; Service Visibility</span>
+      <span class="tag" id="tag-vendor">Vendor &amp; Carrier Management</span>
+      <span class="tag" id="tag-billing">Commercial &amp; Billing Assurance</span>
+      <span class="tag" id="tag-security">Security &amp; Policy Governance</span>
+      <span class="tag" id="tag-optimization">Continuous Optimization</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const popupData = {
+  fiber: { tier:'network', eyebrow:'Network Connectivity', title:'Fiber', body:'Achieve enterprise bandwidth and symmetric high speeds with fiber optic connectivity. Highly reliable, fiber is the Cadillac of today\u2019s internet transport options.', partnersTitle:'Fiber Partners', partners:['AT&T','Verizon','Spectrum','Lumen','Zayo','Comcast Business','CenturyLink'] },
+  ucaas: { tier:'overlay', eyebrow:'NewVoice Business Cloud', title:'Modern Cloud Communications for the Way Your Business Works', body:'NewVoice Business Cloud (NV-BC) is an all-in-one communication and collaboration platform that empowers your teams to talk, meet, chat, and share from anywhere. Designed for today\u2019s hybrid workforce, NewVoice-BC replaces outdated phone systems with a fully cloud-managed solution that scales effortlessly as your business grows.\n\nWith three flexible service tiers\u2014Standard, Advanced, and Professional\u2014NewVoice-BC gives your organization the right combination of calling features, mobility tools, and collaboration capabilities to stay connected and productive.', partnersTitle:'UCaaS Partners', partners:['NHC NewVoice Business Cloud','Zoom'] },
+  sdwan: { tier:'overlay', eyebrow:'Network Control & Security', title:'SD-WAN', body:'NHC SD-WAN will put all your bandwidth to work for you and your applications. Our SD-WAN approach is truly cloud-centric. This means it not only provides a variety of edge management capabilities that make sense, but it also creates a cloud onramp for any organization that hasn\u2019t yet gone completely into the cloud.', partnersTitle:'SD-WAN Partners', partners:['Arista Velocloud','Bigleaf','Fortinet','Ubiquiti Unifi'] }
+};
+
+const coreManaged = [
+  { label:'Service Onboarding & Activation', tip:'A dedicated project manager owns your implementation from kickoff to go-live' },
+  { label:'Change Management & Lifecycle Control', tip:'NHC manages every move, add, change, and technology refresh across the full service lifecycle' }
+];
+
+const solutions = {
+  continuity: {
+    title:'Business Continuity',
+    desc:'Keeps customers connected and operational during outages using diverse transport paths, automatic failover, remote device control, and 24/7 managed oversight.',
+    key:[{id:'tag-sdwan',label:'SD-WAN',tier:'o',tip:'Automatically fails over between circuits with no user impact'},{id:'tag-broadband',label:'Broadband',tier:'n',tip:'Primary or secondary diverse transport path'},{id:'tag-wireless',label:'Wireless LTE/5G',tier:'n',tip:'Last-resort failover when wireline circuits fail'},{id:'tag-edgepower',label:'Edge Power & Device Control',tier:'o',tip:'Remotely cycles equipment to restore connectivity fast'}],
+    supporting:[{id:'tag-fixedwireless',label:'Fixed Wireless',tier:'n',tip:'Alternative last-mile path for transport diversity'},{id:'tag-satellite',label:'Satellite',tier:'n',tip:'Ultimate backup for the most remote locations'},{id:'tag-perf',label:'Performance Optimization',tier:'o',tip:'Monitors and adjusts traffic flows across all active paths'}],
+    managedKey:[{label:'Monitoring & Observability',tip:'24/7 detection of circuit failures and performance degradation'},{label:'Incident Ownership & Resolution',tip:'NHC owns the response — not just the alert'},{label:'Service Assurance & SLA Management',tip:'Uptime commitments backed by contractual SLAs'}],
+    managedSup:[{label:'Vendor & Carrier Management',tip:'NHC coordinates with carriers on circuit issues on your behalf'}],
+    managedStandard:['Customer Experience & Service Visibility','Commercial & Billing Assurance','Security & Policy Governance','Continuous Optimization']
+  },
+  secure: {
+    title:'Secure Network',
+    desc:'Delivers end-to-end network security across all locations and users — from edge firewalls and SASE to device-level policy enforcement and continuous threat monitoring.',
+    key:[{id:'tag-sase',label:'SASE',tier:'o',tip:'Combines network and security into a single cloud-delivered service'},{id:'tag-firewall',label:'Firewall / Threat Protection',tier:'o',tip:'Blocks threats at the edge before they reach users'},{id:'tag-sdwan',label:'SD-WAN',tier:'o',tip:'Enforces consistent security policy across every site'},{id:'tag-fiber',label:'Fiber',tier:'n',tip:'Reliable primary path with reduced shared infrastructure exposure'}],
+    supporting:[{id:'tag-lan',label:'LAN & WiFi',tier:'o',tip:'Extends security policy all the way to the end device'},{id:'tag-edgepower',label:'Edge Power & Device Control',tier:'o',tip:'Ensures security appliances stay online and responsive'},{id:'tag-broadband',label:'Broadband',tier:'n',tip:'Secondary path — segmented and policy-controlled via SD-WAN'}],
+    managedKey:[{label:'Security & Policy Governance',tip:'NHC enforces and audits security policy across all managed services'},{label:'Monitoring & Observability',tip:'Continuous threat monitoring and anomaly detection'},{label:'Incident Ownership & Resolution',tip:'NHC responds to security events, not just network outages'}],
+    managedSup:[{label:'Service Assurance & SLA Management',tip:'Performance and security posture guarantees'}],
+    managedStandard:['Customer Experience & Service Visibility','Vendor & Carrier Management','Commercial & Billing Assurance','Continuous Optimization']
+  },
+  workforce: {
+    title:'Modern Workforce',
+    desc:'Enables employees to communicate and collaborate from anywhere with unified communications, calling, and a reliable, high-performance network underneath.',
+    key:[{id:'tag-ucaas',label:'UCaaS',tier:'o',tip:'Core platform — calling, meetings, chat and presence in one place'},{id:'tag-teams',label:'Teams Calling',tier:'o',tip:'Extends Microsoft Teams with full enterprise voice'},{id:'tag-voip',label:'VoIP Calling',tier:'o',tip:'Cloud-based voice replacing legacy desk phones'},{id:'tag-sdwan',label:'SD-WAN',tier:'o',tip:'Prioritizes voice and video traffic for consistent call quality'},{id:'tag-fiber',label:'Fiber',tier:'n',tip:'Delivers the symmetric, low-latency bandwidth UCaaS demands'}],
+    supporting:[{id:'tag-wireless',label:'Wireless LTE/5G',tier:'n',tip:'Backup path for remote or mobile workers'},{id:'tag-sase',label:'SASE',tier:'o',tip:'Secures remote users accessing cloud apps from any location'},{id:'tag-lan',label:'LAN & WiFi',tier:'o',tip:'Extends reliable connectivity to every desk and device on site'}],
+    managedKey:[{label:'Customer Experience & Service Visibility',tip:'Portal gives IT full visibility into user and service health'},{label:'Continuous Optimization',tip:'NHC tunes performance as usage patterns evolve'}],
+    managedSup:[{label:'Monitoring & Observability',tip:'Continuous monitoring of UCaaS and network performance'},{label:'Incident Ownership & Resolution',tip:'NHC owns resolution end-to-end when issues arise'}],
+    managedStandard:['Service Assurance & SLA Management','Vendor & Carrier Management','Commercial & Billing Assurance','Security & Policy Governance']
+  },
+  multilocation: {
+    title:'Multi-Location Management',
+    desc:'Simplifies connectivity, voice, and security across dozens or hundreds of sites with consistent policy, centralized visibility, and a single managed service layer.',
+    key:[{id:'tag-sdwan',label:'SD-WAN',tier:'o',tip:'Single pane of glass for policy and traffic across all sites'},{id:'tag-fiber',label:'Fiber',tier:'n',tip:'Primary transport for high-bandwidth locations'},{id:'tag-broadband',label:'Broadband',tier:'n',tip:'Cost-effective connectivity for smaller or lower-priority sites'},{id:'tag-lan',label:'LAN & WiFi',tier:'o',tip:'Consistent wired and wireless experience across every location'}],
+    supporting:[{id:'tag-fixedwireless',label:'Fixed Wireless',tier:'n',tip:'Fills coverage gaps where fiber or broadband is unavailable'},{id:'tag-perf',label:'Performance Optimization',tier:'o',tip:'Ensures app performance is consistent site to site'},{id:'tag-edgepower',label:'Edge Power & Device Control',tier:'o',tip:'Remote reboot and device management without site dispatch'},{id:'tag-sase',label:'SASE',tier:'o',tip:'Consistent security policy applied uniformly across all locations'}],
+    managedKey:[{label:'Vendor & Carrier Management',tip:'NHC consolidates multiple carrier relationships into one'},{label:'Customer Experience & Service Visibility',tip:'Single portal with visibility across every site and circuit'}],
+    managedSup:[{label:'Monitoring & Observability',tip:'Site-by-site health monitoring across the full estate'},{label:'Service Assurance & SLA Management',tip:'SLAs applied consistently across all locations'}],
+    managedStandard:['Incident Ownership & Resolution','Commercial & Billing Assurance','Security & Policy Governance','Continuous Optimization']
+  },
+  cloud: {
+    title:'Cloud Performance',
+    desc:'Optimizes network paths and application performance for cloud-hosted workloads, ensuring reliable access to SaaS, UCaaS, and hosted platforms.',
+    key:[{id:'tag-sdwan',label:'SD-WAN',tier:'o',tip:'Steers application traffic via the optimal path to cloud destinations'},{id:'tag-sase',label:'SASE',tier:'o',tip:'Secures cloud access without backhauling traffic through a data center'},{id:'tag-perf',label:'Performance Optimization',tier:'o',tip:'Continuously tunes WAN paths for cloud app responsiveness'},{id:'tag-fiber',label:'Fiber',tier:'n',tip:'Low-latency, high-bandwidth primary transport for cloud workloads'}],
+    supporting:[{id:'tag-ucaas',label:'UCaaS',tier:'o',tip:'Cloud communications that benefit directly from optimized paths'},{id:'tag-broadband',label:'Broadband',tier:'n',tip:'Secondary or supplemental path adding bandwidth headroom'}],
+    managedKey:[{label:'Monitoring & Observability',tip:'Tracks application performance to cloud destinations in real time'},{label:'Continuous Optimization',tip:'NHC proactively adjusts routing as cloud traffic patterns shift'},{label:'Service Assurance & SLA Management',tip:'Performance guarantees tied to cloud application experience'}],
+    managedSup:[{label:'Incident Ownership & Resolution',tip:'NHC owns resolution when cloud path degradation is detected'}],
+    managedStandard:['Customer Experience & Service Visibility','Vendor & Carrier Management','Commercial & Billing Assurance','Security & Policy Governance']
+  },
+  voice: {
+    title:'Voice Modernization',
+    desc:'Replaces aging PRI, analog, and POTS infrastructure with cloud-based voice, SIP trunking, and Teams-integrated calling — fully managed through transition and beyond.',
+    key:[{id:'tag-sip',label:'SIP Trunking',tier:'o',tip:'Replaces PRI circuits with cloud-based voice trunks'},{id:'tag-voip',label:'VoIP Calling',tier:'o',tip:'Moves desk phones to cloud-managed endpoints'},{id:'tag-teams',label:'Teams Calling',tier:'o',tip:'Integrates enterprise voice directly into Microsoft Teams'},{id:'tag-analog',label:'Analog & PRI Replacement',tier:'n',tip:'Migrates legacy circuits to modern transport'},{id:'tag-pots',label:'POTS Replacement / FLS',tier:'n',tip:'Eliminates copper POTS lines with digital alternatives'}],
+    supporting:[{id:'tag-numrep',label:'Number Reputation Mgmt',tier:'o',tip:'Ensures outbound calls display as trusted and are answered'},{id:'tag-ucaas',label:'UCaaS',tier:'o',tip:'Full collaboration suite layered on top of voice modernization'}],
+    managedKey:[{label:'Vendor & Carrier Management',tip:'NHC manages carrier relationships and legacy circuit disconnects'},{label:'Commercial & Billing Assurance',tip:'Eliminates billing overlap between legacy and new services'}],
+    managedSup:[{label:'Monitoring & Observability',tip:'Monitors call quality, uptime, and platform health post-cutover'},{label:'Customer Experience & Service Visibility',tip:'End-user and IT visibility into voice service performance'}],
+    managedStandard:['Incident Ownership & Resolution','Service Assurance & SLA Management','Security & Policy Governance','Continuous Optimization']
+  }
+};
+
+const allTagIds = ['tag-fiber','tag-broadband','tag-wireless','tag-fixedwireless','tag-satellite','tag-analog','tag-pots','tag-ucaas','tag-cc','tag-voip','tag-teams','tag-sip','tag-numrep','tag-sdwan','tag-sase','tag-firewall','tag-perf','tag-lan','tag-edgepower','tag-onboarding','tag-monitoring','tag-incident','tag-sla','tag-change','tag-cx','tag-vendor','tag-billing','tag-security','tag-optimization'];
+const hasPopupIds = ['tag-fiber','tag-ucaas','tag-sdwan'];
+let activeSolution = null, activePopup = null, activePartnersKey = null;
+
+function placeElement(el, anchorRect, elWidth) {
+  const vw = document.documentElement.clientWidth;
+  const vh = document.documentElement.clientHeight;
+  let left = anchorRect.left;
+  let top = anchorRect.bottom + 6;
+  if (left + elWidth > vw - 8) left = vw - elWidth - 8;
+  if (left < 8) left = 8;
+  if (top + 300 > vh) top = Math.max(8, anchorRect.top - 310);
+  el.style.left = left + 'px';
+  el.style.top = top + 'px';
+}
+
+function showPopup(e, key) {
+  e.stopPropagation();
+  const data = popupData[key]; if (!data) return;
+  if (activePopup === key) { hidePopup(); return; }
+  hidePartners(); activePopup = key;
+  const popup = document.getElementById('tag-popup');
+  popup.className = 'tag-popup tier-' + data.tier + ' visible';
+  document.getElementById('popup-eyebrow').textContent = data.eyebrow;
+  document.getElementById('popup-title').textContent = data.title;
+  document.getElementById('popup-body').innerHTML = data.body.split('\n\n').map(p => '<p>' + p + '</p>').join('');
+  document.getElementById('popup-partners-wrap').innerHTML = data.partners ? '<button class="partners-btn" onclick="showPartners(event,\'' + key + '\')">View Partners &#8594;</button>' : '';
+  placeElement(popup, e.target.getBoundingClientRect(), 300);
+}
+
+function hidePopup() {
+  activePopup = null; hidePartners();
+  document.getElementById('tag-popup').classList.remove('visible');
+}
+
+function showPartners(e, key) {
+  e.stopPropagation();
+  const data = popupData[key]; if (!data || !data.partners) return;
+  if (activePartnersKey === key) { hidePartners(); return; }
+  activePartnersKey = key;
+  const pp = document.getElementById('partners-popup');
+  pp.className = 'partners-popup tier-' + data.tier + ' visible';
+  document.getElementById('pp-title').textContent = data.partnersTitle;
+  document.getElementById('pp-list').innerHTML = data.partners.map(p => '<li>' + p + '</li>').join('');
+  const mainPopup = document.getElementById('tag-popup');
+  placeElement(pp, mainPopup.getBoundingClientRect(), 220);
+}
+
+function hidePartners() {
+  activePartnersKey = null;
+  document.getElementById('partners-popup').classList.remove('visible');
+}
+
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('#tag-popup') && !e.target.closest('#partners-popup') && !e.target.classList.contains('has-popup')) hidePopup();
+});
+
+function getTagClass(id) { return hasPopupIds.includes(id) ? 'tag has-popup' : 'tag'; }
+
+function makeBadge(cap, isKey, withPopup) {
+  const tier = cap.tier || 'm';
+  const cls = isKey ? tier : 'sup-' + tier;
+  const popupCls = withPopup ? ' has-popup' : '';
+  const onclick = withPopup ? ` onclick="showPopup(event,'${withPopup}')"` : '';
+  const tt = cap.tip ? `<span class="sp-tooltip">${cap.tip}</span>` : '';
+  return `<span class="tip-wrap"><span class="sp-badge ${cls}${popupCls}"${onclick}>${cap.label}${withPopup ? ' &#9432;' : ''}</span>${tt}</span>`;
+}
+
+function toggleManaged() {
+  document.getElementById('managed-detail').classList.toggle('visible');
+  document.getElementById('managed-badge').classList.toggle('open');
+}
+
+function showSolution(key) {
+  hidePopup();
+  if (activeSolution === key) { clearHighlights(); activeSolution = null; return; }
+  activeSolution = key;
+  const s = solutions[key];
+
+  document.querySelectorAll('.solutions-box li').forEach(li => li.classList.remove('active'));
+  document.getElementById('li-' + key).classList.add('active');
+
+  // Highlight cap column tags
+  const allCapIds = [...s.key.map(c=>c.id), ...s.supporting.map(c=>c.id)].filter(Boolean);
+  allTagIds.forEach(id => { const el = document.getElementById(id); if (el) el.className = getTagClass(id); });
+  s.key.forEach(cap => { const el = document.getElementById(cap.id); if (el) el.classList.add('highlight-' + (cap.tier==='n'?'network':'overlay')); });
+  s.supporting.forEach(cap => { const el = document.getElementById(cap.id); if (el) el.classList.add('highlight-' + (cap.tier==='n'?'network':'overlay')); });
+
+  // Solution panel
+  document.getElementById('panel-title').textContent = s.title;
+  document.getElementById('panel-desc').textContent = s.desc;
+
+  const popupMap = {'Fiber':'fiber','UCaaS':'ucaas','SD-WAN':'sdwan'};
+  document.getElementById('p-key').innerHTML = s.key.map(c => makeBadge(c, true, popupMap[c.label]||null)).join('');
+  document.getElementById('p-supporting').innerHTML = s.supporting.map(c => makeBadge(c, false, popupMap[c.label]||null)).join('');
+
+  const allManagedKey = [...coreManaged, ...s.managedKey];
+  document.getElementById('p-managed-key').innerHTML = allManagedKey.map(c => makeBadge({...c, tier:'m'}, true, null)).join('');
+
+  const supRow = document.getElementById('p-managed-sup-row');
+  if (s.managedSup && s.managedSup.length) {
+    document.getElementById('p-managed-sup').innerHTML = s.managedSup.map(c => makeBadge({...c, tier:'m'}, false, null)).join('');
+    supRow.style.display = 'block';
+  } else { supRow.style.display = 'none'; }
+
+  document.getElementById('managed-standard-list').innerHTML = s.managedStandard.map(l => `<span class="managed-item">${l}</span>`).join('');
+
+  document.getElementById('managed-detail').classList.remove('visible');
+  document.getElementById('managed-badge').classList.remove('open');
+  document.getElementById('solution-panel').classList.add('visible');
+}
+
+function clearHighlights() {
+  document.querySelectorAll('.solutions-box li').forEach(li => li.classList.remove('active'));
+  allTagIds.forEach(id => { const el = document.getElementById(id); if (el) el.className = getTagClass(id); });
+  document.getElementById('solution-panel').classList.remove('visible');
+}
+</script>
+</body>
+</html>
