@@ -428,7 +428,7 @@ function showSolution(key) {
   document.getElementById('panel-title').textContent = s.title;
   document.getElementById('panel-desc').textContent = s.desc;
 
-  const popupMap = {'Fiber':'fiber','UCaaS':'ucaas','SD-WAN':'sdwan'};
+  const popupMap = {'Fiber':'fiber','Broadband':'broadband','UCaaS':'ucaas','SD-WAN':'sdwan'};
   document.getElementById('p-key').innerHTML = s.key.map(c => makeBadge(c, true, popupMap[c.label]||null)).join('');
   document.getElementById('p-supporting').innerHTML = s.supporting.map(c => makeBadge(c, false, popupMap[c.label]||null)).join('');
 
