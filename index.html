@@ -270,7 +270,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 const popupData = {
   fiber: { tier:'network', eyebrow:'Network Connectivity', title:'Fiber', body:'Achieve enterprise bandwidth and symmetric high speeds with fiber optic connectivity. Highly reliable, fiber is the Cadillac of today\u2019s internet transport options.', partnersTitle:'Fiber Partners', partners:['AT&T','Verizon','Spectrum','Lumen','Zayo','Comcast Business','CenturyLink'] },
   ucaas: { tier:'overlay', eyebrow:'NewVoice Business Cloud', title:'Modern Cloud Communications for the Way Your Business Works', body:'NewVoice Business Cloud (NV-BC) is an all-in-one communication and collaboration platform that empowers your teams to talk, meet, chat, and share from anywhere. Designed for today\u2019s hybrid workforce, NewVoice-BC replaces outdated phone systems with a fully cloud-managed solution that scales effortlessly as your business grows.\n\nWith three flexible service tiers\u2014Standard, Advanced, and Professional\u2014NewVoice-BC gives your organization the right combination of calling features, mobility tools, and collaboration capabilities to stay connected and productive.', partnersTitle:'UCaaS Partners', partners:['NHC NewVoice Business Cloud','Zoom'] },
-  sdwan: { tier:'overlay', eyebrow:'Network Control & Security', title:'SD-WAN', body:'NHC SD-WAN will put all your bandwidth to work for you and your applications. Our SD-WAN approach is truly cloud-centric. This means it not only provides a variety of edge management capabilities that make sense, but it also creates a cloud onramp for any organization that hasn\u2019t yet gone completely into the cloud.', partnersTitle:'SD-WAN Partners', partners:['Arista Velocloud','Bigleaf','Fortinet','Ubiquiti Unifi'] }
+  sdwan: { tier:'overlay', eyebrow:'Network Control & Security', title:'SD-WAN', body:'NHC SD-WAN will put all your bandwidth to work for you and your applications. Our SD-WAN approach is truly cloud-centric. This means it not only provides a variety of edge management capabilities that make sense, but it also creates a cloud onramp for any organization that hasn\u2019t yet gone completely into the cloud.', partnersTitle:'SD-WAN Partners', partners:['Arista Velocloud','Bigleaf','Fortinet','Ubiquiti Unifi'] },
+  broadband: { tier:'network', eyebrow:'Network Connectivity', title:'Broadband', body:'High-speed access that\u2019s broadly available in almost every market. The standard for many years, businesses of all sizes can benefit from having this method on their access mix.', partnersTitle:'Broadband Partners', partners:['AT&T','Comcast Business','Spectrum','Cox Business','Lumen','CenturyLink','Frontier','Optimum','Brightspeed','Windstream','WOW! Business','TDS Telecom','Mediacom','Consolidated Communications','Bell Canada','Rogers','Telus','Cogeco','Videotron'] }
 };
 
 const coreManaged = [
@@ -336,7 +337,7 @@ const solutions = {
 };
 
 const allTagIds = ['tag-fiber','tag-broadband','tag-wireless','tag-fixedwireless','tag-satellite','tag-analog','tag-pots','tag-ucaas','tag-cc','tag-voip','tag-teams','tag-sip','tag-numrep','tag-sdwan','tag-sase','tag-firewall','tag-perf','tag-lan','tag-edgepower','tag-onboarding','tag-monitoring','tag-incident','tag-sla','tag-change','tag-cx','tag-vendor','tag-billing','tag-security','tag-optimization'];
-const hasPopupIds = ['tag-fiber','tag-ucaas','tag-sdwan'];
+const hasPopupIds = ['tag-fiber','tag-broadband','tag-ucaas','tag-sdwan'];
 let activeSolution = null, activePopup = null, activePartnersKey = null;
 
 function placeElement(el, anchorRect, elWidth) {
